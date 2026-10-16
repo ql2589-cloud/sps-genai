@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Datasets
+data/
+
+# macOS
+.DS_Store
