@@ -1,6 +1,10 @@
 
 import io
 from pathlib import Path
+from fastapi.responses import Response
+from torchvision.utils import save_image
+
+from app.gan_model import Generator
 
 import torch
 from PIL import Image, UnidentifiedImageError
@@ -49,6 +53,20 @@ CIFAR10_CLASSES = [
 ]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# GAN handwritten digit generator
+GAN_MODEL_PATH = BASE_DIR / "gan_generator.pth"
+
+gan_generator = Generator()
+gan_generator.load_state_dict(
+    torch.load(
+        GAN_MODEL_PATH,
+        map_location="cpu",
+        weights_only=True
+    )
+)
+gan_generator.eval()
+
 MODEL_PATH = BASE_DIR / "cnn_model.pth"
 
 cnn_model = CNNModel()
@@ -126,3 +144,21 @@ def classify_image(file: UploadFile = File(...)):
         "predicted_class": predicted_class,
         "confidence": round(confidence.item(), 4)
     }
+
+@app.get("/generate-digit")
+def generate_digit():
+    noise = torch.randn(1, 100)
+
+    with torch.inference_mode():
+        generated_image = gan_generator(noise)
+
+    # Convert pixels from [-1, 1] to [0, 1].
+    generated_image = (generated_image + 1) / 2
+
+    buffer = io.BytesIO()
+    save_image(generated_image, buffer, format="PNG")
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="image/png"
+    )

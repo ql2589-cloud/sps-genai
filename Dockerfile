@@ -32,6 +32,9 @@ COPY ./app /code/app
 # Copy trained CNN weights
 COPY ./cnn_model.pth /code/cnn_model.pth
 
+# Copy trained GAN generator weights
+COPY ./gan_generator.pth /code/gan_generator.pth
+
 # Expose the API port
 EXPOSE 80
 
